@@ -20,6 +20,21 @@ export default function useTimer() {
   }, [])
 
   useEffect(() => {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+  
+    const formattedTime = `${minutes
+      .toString()
+      .padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  
+    document.title = `${formattedTime} | ${
+      mode === "focus" ? "Focus" : "Break"
+    }`;
+  }, [timeLeft, mode]);
+
+  useEffect(() => {
     if (timeLeft === 0 && active) {
       audioRef.current?.play();
   
@@ -48,6 +63,19 @@ export default function useTimer() {
     setActive((prev) => !prev)
   }
 
+  useEffect(() => {
+    if (!active) return;
+  
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => Math.max(prev - 1, 0));
+    }, 1000);
+  
+    // Jalankan sekali langsung
+    setTimeLeft((prev) => Math.max(prev - 1, 0));
+  
+    return () => clearInterval(interval);
+  }, [active]);
+
   const switchMode = () => {
     setMode((prevMode) => {
       const newMode =
@@ -65,27 +93,8 @@ export default function useTimer() {
   }
 
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null
-
-    if(active){
-      interval = setInterval(() => {
-        setTimeLeft((prev) => {
-          return prev > 0 ? prev - 1 : 0
-        })
-      }, 1000)
-    }
-    else if(interval){
-      clearInterval(interval)
-    }
-
-    return () => {
-      if(interval) clearInterval(interval)
-    }
-  }, [active])
-
-  useEffect(() => {
     if (!active) {
-      setTimeLeft(getDuration(mode))
+      setTimeLeft(getDuration(mode));
     }
   }, [
     focusMinutes,
@@ -93,8 +102,7 @@ export default function useTimer() {
     breakMinutes,
     breakSeconds,
     mode,
-    active,
-  ])
+  ]);
 
   return {
     mode,
